@@ -1,16 +1,35 @@
-The provided code creates a centered banner for a GitHub repository, featuring an image, a title, a description, and a link.
+# Blog Manager App
 
-Here's a breakdown:
+A full-stack blog management application designed for seamless content creation, management, and previewing.
 
-*   **`<div align="center">`**: This HTML element creates a container that will center all the elements within it.
-*   **`<img ... />`**: This is an image tag.
-    *   `width="1200"` and `height="475"`: Sets the width and height of the image in pixels.
-    *   `alt="GHBanner"`: Provides alternative text for the image, which is displayed if the image cannot be loaded.
-    *   `src="https://github.com/user-attachments/assets/0aa67016-6eaf-458a-adb2-6e31a0763ed6"`: Specifies the URL of the image.
-*   **`<h1>Built with AI Studio</h1>`**: This is an HTML heading that displays the title "Built with AI Studio".
-*   **`<p>The fastest path from prompt to production with Gemini.</p>`**: This is a paragraph tag that contains the descriptive text.
-*   **`<a href="[################################]">Start building</a>`**: This is an anchor tag (link).
-    *   `href="[################################]"`: Specifies the URL the link will navigate to.
-    *   `Start building`: The text that will be displayed as the clickable link.
+## Features
 
-The code is designed to be a visually appealing and informative banner for a GitHub project, promoting the use of AI Studio and Gemini.
+- **Markdown Editor**: Integrated editor with a toolbar for bold, italic, and list formatting.
+- **Live Preview**: Real-time preview functionality with both 'Full Post' and 'Card' view modes to match the live site's styling.
+- **AI Image Generation**: Generate featured images for your blog posts using the Gemini API.
+- **Content Management**: Create, edit, and delete blog posts with ease.
+- **Firebase Integration**: Real-time data synchronization using Firestore.
+- **Responsive Design**: Built with Tailwind CSS for a seamless experience across all devices.
+
+## Tech Stack
+
+- **Frontend**: React, TypeScript, Tailwind CSS, Lucide React, Motion
+- **Backend/Database**: Firebase Firestore
+- **AI Integration**: Gemini API (for image generation)
+- **Build Tool**: Vite
+
+## Getting Started
+
+1. **Install Dependencies**:
+   ```bash
+   npm install
+   ```
+
+2. **Run Development Server**:
+   ```bash
+   npm run dev
+   ```
+
+## Configuration
+
+This project requires Firebase configuration. Ensure your `firebase-applet-config.json` is correctly set up with your Firebase project credentials.

@@ -1,0 +1,110 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // ===============================================================
+    // Assumed Data Model
+    // ===============================================================
+    //
+    // Collection: users
+    // Document ID: {userId}
+    // Fields:
+    //   - uid: string (required)
+    //   - email: string (required)
+    //   - role: string (required, 'admin')
+    //   - createdAt: timestamp (required)
+    //
+    // ===============================================================
+
+    // ===============================================================
+    // Helper Functions
+    // ===============================================================
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    function isAdmin() {
+      return isAuthenticated() && (
+        (exists(/databases/$(database)/documents/users/$(request.auth.uid)) && 
+         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin') ||
+        (request.auth.token.email == "joe@status26.com" && request.auth.token.email_verified == true)
+      );
+    }
+
+    function isValidEmail(email) {
+      return email is string && email.matches("^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$");
+    }
+
+    function hasOnlyAllowedFields(fields) {
+      return request.resource.data.keys().hasOnly(fields);
+    }
+
+    function isValidAdminUser(data) {
+      return hasOnlyAllowedFields(['uid', 'email', 'role', 'createdAt']) &&
+             data.uid is string && data.uid.size() > 0 && data.uid.size() < 128 &&
+             data.email is string && isValidEmail(data.email) && data.email.size() < 256 &&
+             data.role == 'admin' &&
+             data.createdAt is timestamp;
+    }
+
+    function uidUnchanged() {
+      return !('uid' in request.resource.data) || request.resource.data.uid == request.auth.uid;
+    }
+
+    function uidNotModified() {
+      return !('uid' in request.resource.data) || request.resource.data.uid == resource.data.uid;
+    }
+
+    // ===============================================================
+    // Rules
+    // ===============================================================
+    
+    match /users/{userId} {
+      // Only admins can read the users list
+      allow read: if isAdmin() || isOwner(userId);
+      
+      // Allow creation if the user is an admin, or if they are the bootstrapped admin creating their own record
+      allow create: if isAuthenticated() && 
+                       isValidAdminUser(request.resource.data) && 
+                       uidUnchanged() && 
+                       isOwner(userId) && 
+                       isAdmin();
+                       
+      // Allow updates only by admins, and they can't change their UID
+      allow update: if isAuthenticated() && 
+                       isValidAdminUser(request.resource.data) && 
+                       uidNotModified() && 
+                       isAdmin() && 
+                       request.resource.data.createdAt == resource.data.createdAt;
+                       
+      allow delete: if isAdmin();
+    }
+
+    match /blog_posts/{postId} {
+      // Anyone can read blog posts
+      allow read: if true;
+      
+      // Only admins can create, update, or delete blog posts
+      allow create: if isAdmin() && isValidBlogPost(request.resource.data);
+      allow update: if isAdmin() && isValidBlogPost(request.resource.data);
+      allow delete: if isAdmin();
+    }
+
+    function isValidBlogPost(data) {
+      return data.keys().hasAll(['id', 'slug', 'title', 'excerpt', 'content', 'author', 'date', 'category', 'imageUrl']) &&
+             data.id is string &&
+             data.slug is string &&
+             data.title is string && data.title.size() > 0 && data.title.size() < 256 &&
+             data.excerpt is string && data.excerpt.size() < 1024 &&
+             data.content is string && data.content.size() < 100000 &&
+             data.author is string &&
+             data.date is string &&
+             data.category is string &&
+             data.imageUrl is string && data.imageUrl.size() < 1000000; // Limit image size to ~1MB
+    }
+  }
+}
